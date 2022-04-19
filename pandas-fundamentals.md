@@ -12,11 +12,14 @@ This is a cheat sheet for the most useful commands used for data analysis in pan
     - [Importing files correctly: delimiters and dates](#importing-files-correctly-delimiters-and-dates)
   - [First steps after importing - best practice](#first-steps-after-importing---best-practice)
     - [Check the data types of each column](#check-the-data-types-of-each-column)
+    - [Converting columns to datetime](#converting-columns-to-datetime)
   - [Quick data overview: Exploratory analysis](#quick-data-overview-exploratory-analysis)
     - [Get all of the unique values from a given column, along with a count for each value](#get-all-of-the-unique-values-from-a-given-column-along-with-a-count-for-each-value)
   - [Exporting data](#exporting-data)
     - [Exporting to a CSV file](#exporting-to-a-csv-file)
     - [Exporting to an Excel file](#exporting-to-an-excel-file)
+  - [Sorting Data](#sorting-data)
+    - [Sort by given column](#sort-by-given-column)
 
 <!-- /TOC -->
 
@@ -68,6 +71,12 @@ df.dtypes
 # dtype: object
 ```
 
+### Converting columns to datetime
+
+```python
+sales["Calculated_Date"] = pd.to_datetime(sales["Calculated_Date"])
+```
+
 ## Quick data overview: Exploratory analysis
 
 ### Get all of the unique values from a given column, along with a count for each value
@@ -91,4 +100,13 @@ df.to_csv("data.csv")
 ```python
 # File is being imported from the "data" folder.
 df.to_excel("data.xlsx")
+```
+
+## Sorting Data
+
+### Sort by given column
+
+```python
+# We are sorting the sales dataframe by revenue, descending.
+sales.sort_values(["Revenue"], ascending=False).head(5)
 ```
