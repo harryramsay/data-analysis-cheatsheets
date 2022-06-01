@@ -47,6 +47,27 @@ One-page summary of my notes from the course.
   - [Bitwise negation](#bitwise-negation)
   - [Filtering by missing values: `isna` and `notna` methods](#filtering-by-missing-values-isna-and-notna-methods)
 - [Section 9: Adding & Removing columns](#section-9-adding--removing-columns)
+  - [Dropping values](#dropping-values)
+  - [Adding static columns](#adding-static-columns)
+  - [Adding dynamic columns](#adding-dynamic-columns)
+    - [Summing columns](#summing-columns)
+    - [Calculating new values for columns](#calculating-new-values-for-columns)
+- [Section 11: Working with Types and NA values](#section-11-working-with-types-and-na-values)
+  - [Casting types with `astype()`](#casting-types-with-astype)
+  - [Introducing the Category type](#introducing-the-category-type)
+  - [Casting with pd.to_numeric()](#casting-with-pdto_numeric)
+  - [dropna() and isna()](#dropna-and-isna)
+    - [Dropping na values on a series](#dropping-na-values-on-a-series)
+    - [Dropping na values on a dataframe](#dropping-na-values-on-a-dataframe)
+  - [`fillna` - Replacing na values with another value](#fillna---replacing-na-values-with-another-value)
+- [Section 12: Working with Dates & Times](#section-12-working-with-dates--times)
+  - [Converting with pd.to_datetime()](#converting-with-pdto_datetime)
+  - [Specifying date formats](#specifying-date-formats)
+  - [Converting columns to datetimes](#converting-columns-to-datetimes)
+  - [Useful `dt` properties](#useful-dt-properties)
+  - [Comparing Dates](#comparing-dates)
+  - [Date math & Timedeltas](#date-math--timedeltas)
+- [Section 13: Matplotlib](#section-13-matplotlib)
 
 <!-- /TOC -->
 
@@ -476,3 +497,309 @@ netflix[netflix["director"].isna() & netflix["cast"].isna()]
 ```
 
 # Section 9: Adding & Removing columns
+
+## Dropping values
+
+> (Note: `axis=0` = rows, `axis=1` = columns. Axis is 0 by default.)
+
+```python
+# 1 - Using both 'labels' and 'axis'
+btc.drop(labels=["SNo", "Name", "Symbol"], axis=1)
+# 2 - Using only 'columns'
+btc.drop(columns=["SNo", "Name", "Symbol"])
+```
+
+How to delete the first three rows?
+
+First get the three rows using the `index` method:
+
+```python
+countries.index[0:3]
+```
+
+then slot this into the `drop` argument:
+
+```python
+countries.drop(countries.index[0:3])
+```
+
+Another example: This takes everything from 10 onwards as your selection, and that selection is then dropped (in other words, everything before that will stay in the existing dataframe.)
+
+```python
+countries.drop(countries.index[10:])
+```
+
+## Adding static columns
+
+Assign a value to a new column name. This appends a new column to the end of the existing dataframe.
+
+```python
+titanic["species"] = "human"
+```
+
+If you want to insert it in a different position, you can use the `insert` method and specify a column index:
+
+```python
+houses.insert(0, "county", "King County")
+```
+
+(This creates a new column called "county" in position 0 of the table and populates every value with "King County")
+
+## Adding dynamic columns
+
+### Summing columns
+
+```python
+titanic["sibsp"] + titanic["parch"]
+```
+
+### Calculating new values for columns
+
+Let's calculate the price by square foot, and then sort by most expensive
+
+```python
+houses["price_sqft"] = houses["price"] / houses["sqft_living"]
+# now find the most expensive per square foot
+houses.sort_values("price_sqft", ascending=False)
+```
+
+Do certain zip codes have a higher price per square foot?
+
+```python
+houses.sort_values("price_sqft", ascending=False).head(50)["zipcode"].value_counts()
+```
+
+# Section 11: Working with Types and NA values
+
+## Casting types with `astype()`
+
+If we want to convert, we can use `astype()`.
+
+- object
+- int
+- float
+- category
+
+This does not work in place.
+
+```python
+titanic["age"] = titanic["age"].astype("float")
+```
+
+## Introducing the Category type
+
+> **Category** = represents text data where there is a finite number of possible values. Gender is a good example.
+
+Why would you use category as a data type?
+
+> Object allows for any type of value - and sets space accordingly, meaning that it might be taking up much more space than we actually need. Casting to a category type, therefore, might be much more efficient.
+
+```python
+titanic["sex"] = titanic["sex"].astype("category")
+```
+
+## Casting with pd.to_numeric()
+
+`pd.to_numeric()` can convert columns to numeric values, BUT it also has the benefit of being able to set an error parameter.
+
+- If set to `raise`, it raises an exception.
+- if set to `coerce`, it turns any weird, non-castable item (such as question marks) into a NaN value.
+- if set to `ignore`, it returns input.
+
+```python
+titanic["age"] = pd.to_numeric(titanic["age"], errors="coerce")
+```
+
+## dropna() and isna()
+
+`isna()` returns a boolean dataframe demonstrating whether `na` is present. To filter, plug it back into the main dataframe. Let’s look for all rows that don’t have a league, for example:
+
+```python
+stats[stats["league"].isna()]
+```
+
+### Dropping na values on a series
+
+This returns a new series (original, not modified) with all null values dropped. You can modify the original with inplace=True.
+
+```python
+stats["assist"].dropna()
+```
+
+### Dropping na values on a dataframe
+
+This works a bit differently to a series `dropna`. By default, it works on **rows** (`axis=0`) but can be set to work on columns with `axis=1`.
+
+- `how=any`
+  - Drop the row or column if **any** NaN values are present.
+- `how=all`
+  - Drop the row or column **only if all values are NaN.**
+
+By default, it uses “any”.
+
+We can also use `subset` to provide a **_list_** of labels that we want it to look at. For example, if we want to drop rows where we don’t have any value for “league”. You could pass multiple columns, if you like.
+
+```python
+stats.dropna(subset=["league"])
+```
+
+## `fillna` - Replacing na values with another value
+
+This replaces every null value in a dataframe with 0.
+
+```python
+stats.fillna(0)
+```
+
+If you only want to do this on certain columns, you can provide a dictionary of values to replace with for that column:
+
+```python
+stats.fillna({"points": 0, "assists": 0, "rebounds": 0, "league": "amateur"})
+```
+
+You can fill with values from another column. Let’s say we want to fill any NaN values in shipping with the existing values in billing.
+
+```python
+sales["shipping_zip"].fillna(sales["billing_zip"], inplace=True)
+```
+
+# Section 12: Working with Dates & Times
+
+## Converting with pd.to_datetime()
+
+This converts many different items to a datetime object.
+
+```python
+pd.to_datetime("2019-12-31")
+```
+
+It's extremely flexible with date input formats. All of the following formats are supported, plus more.
+
+```
+2019-12-31
+2019-31-12
+12-31-2019
+31-12-2019
+31/12/2019
+31.12.2019
+12-31-19
+December 31st 2019
+Dec. 31st 19
+2019-31-12 11:59pm
+2019-31-12 23:59
+2019-31-12 23:59:45
+```
+
+## Specifying date formats
+
+What if the date is ambiguous, like `10-11-12` ?
+You can add `dayfirst=True`. (`yearfirst = True` is also an option.)
+
+We can also specify the specific format we need.
+
+```python
+pd.to_datetime("10/11/12", format="%y/%m/%d")
+```
+
+[Full documentation for various datetime formats can be found at this link.](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior)
+
+You can be flexible with this, even including text:
+
+```python
+pd.to_datetime(meetings, format="%b %d % Y Meeting")
+```
+
+This will convert to something like "Dec 11 2019 Meeting", "Jan 6 2019 Meeting", etc.
+
+## Converting columns to datetimes
+
+Does not work in place.
+
+```python
+ufos["date_time"] = pd.to_datetime(ufos["date_time"])
+```
+
+(Alternatively, use the `parse_dates` argument in `pd.read_csv()` and allow it to be read in correctly from the beginning (it requires a list).)
+
+## Useful `dt` properties
+
+Timeseries and date functionality can be found [here](https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#time-date-components).
+
+The following code will return only the "year" component from the "date_time" column.
+
+```python
+ufos["date_time"].dt.year
+```
+
+You can return the date like this::
+
+```python
+ufos["date_time"].dt.date
+```
+
+We could count and plot the number of years in which there were sightings:
+
+```python
+ufos["date_time"].dt.year.value_counts().head(10).plot(kind="bar")
+```
+
+## Comparing Dates
+
+We may want to filter using dates - a date or a time that came before or after `x`. This gives us a boolean series. (Note that you need to use quotes.)
+
+```python
+ufos["date_time"] < "1980"
+```
+
+You can then "plug this in" to the main dataframe to filter it.
+
+```python
+ufos[ufos["date_time"] < "1980"]
+
+```
+
+```python
+recent_sightings = ufos[ufos["date_time"].dt.year >= 2018]
+recent_sightings.sort_values("date_time")
+recent_sightings["date_time"].dt.date.value_counts()
+```
+
+## Date math & Timedeltas
+
+The following code returns a "time delta", i.e. a gap between two points in time.
+
+```python
+ufos["posted"] - ufos["date_time"]
+```
+
+Here's a typical task that may need solving:
+
+- Work with the homes sold between May 1st 2014 and May 1st 2015.
+- Within that year, find the waterfront homes that were sold.
+- Which quarter of that year had the most waterfront home sales? The least?
+- Create a bar plot showing the number of waterfront home sales per quarter.
+
+```python
+house_subset = houses[houses["date"].between("2014-05-01", "2015-05-01")]
+house_subset[house_subset["waterfront"] == 1]["date"].dt.quarter.value_counts().sort_index().plot(kind="bar")
+```
+
+# Section 13: Matplotlib
+
+First import matplotlib.
+
+```python
+import matplotlib.pyplot as plt
+```
+
+`plt.plot()` takes two arguments - `x` and `y`., as well as other stuff if needed.
+
+x and y need to be “array-like data” (a list, a NumPy array, a pandas Series, etc.)
+
+- If we pass in **two** values, it acts as though it’s `x` then `y`, in that order.
+- If we pass in only a **single** value, it treats it as the `y` value. It makes up its own `x` axis, starting at 0 and incrementing by 1.
+
+Note:
+
+- If we use `plt.plot()` in a normal Python file, it **won’t** display.
+- If we use it in a Jupyter notebook, it **will** display.
