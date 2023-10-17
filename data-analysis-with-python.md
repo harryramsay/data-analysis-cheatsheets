@@ -3,6 +3,8 @@
 This is a one-page summary of my notes from Colt Steele's excellent Udemy course, [Python Data Analysis & Visualization Masterclass](
 https://www.udemy.com/course-dashboard-redirect/?course_id=4397644).
 
+# Table of Contents
+
 <!-- TOC -->
 
 - [Python Data Analysis & Visualization Masterclass 2022 - Colt Steele](#python-data-analysis--visualization-masterclass-2022---colt-steele)
